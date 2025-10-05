@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-//import './index.css';
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -29,12 +28,29 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-8 rounded-2xl shadow-md w-80 text-center"
+    <div 
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#f5f5f5',
+      }}
+    >
+      <form 
+        onSubmit={handleLogin} 
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 40,
+          borderRadius: 8,
+          backgroundColor: '#fff',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          minWidth: 300,
+          textAlign: 'center',
+        }}
       >
-        <h2 className="text-2xl font-semibold mb-4">Login</h2>
+        <h2 style={{ marginBottom: 30 }}>Login</h2>
 
         <input
           type="email"
@@ -42,7 +58,14 @@ function Login({ onLogin }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full mb-3 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          style={{
+            padding: 10,
+            marginBottom: 15,
+            borderRadius: 4,
+            border: '1px solid #ccc',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}
         />
         <input
           type="password"
@@ -50,17 +73,38 @@ function Login({ onLogin }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full mb-4 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          style={{
+            padding: 10,
+            marginBottom: 20,
+            borderRadius: 4,
+            border: '1px solid #ccc',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}
         />
+
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors disabled:opacity-70"
+          style={{
+            padding: 12,
+            borderRadius: 4,
+            border: 'none',
+            backgroundColor: '#1976d2',
+            color: '#fff',
+            fontWeight: 'bold',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            marginBottom: 10,
+          }}
         >
-          {loading ? 'Logging in...' : 'Login'}s
+          {loading ? 'Logging in...' : 'Login'}
         </button>
 
-        {error && <p className="text-red-500 mt-3">{error}</p>}
+        {error && (
+          <p style={{ color: 'red', marginTop: 10, fontWeight: 'bold' }}>
+            {error}
+          </p>
+        )}
       </form>
     </div>
   );
