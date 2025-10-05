@@ -29,6 +29,7 @@ function Login({ onLogin }) {
 
   return (
     <form onSubmit={handleLogin}>
+      <div style="text-align:center;">
       <h2>Login</h2>
       <input
         type="email"
@@ -48,6 +49,7 @@ function Login({ onLogin }) {
         {loading ? 'Logging in...' : 'Login'}
       </button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
+      </div>
     </form>
   );
 }
