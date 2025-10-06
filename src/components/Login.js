@@ -1,43 +1,22 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-export default function Login() {
+export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
-
-    const { data, error: loginError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (loginError) {
-      setError('Invalid email or password');
-    } else if (data?.user) {
-      // Navigate to dashboard with user profile data
-      const profileResponse = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-
-      if (profileResponse.data) {
-        navigate('/dashboard', { state: { profile: profileResponse.data } });
-      } else {
-        setError('Profile not found');
-      }
-    }
+    setError(null);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) setError(error.message);
+    else onLogin(data.user);
   };
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div style={{ padding: 20 }}>
+      <h2>Login</h2>
       <form onSubmit={handleLogin}>
         <input
           type="email"
@@ -45,6 +24,7 @@ export default function Login() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          style={{ display: 'block', marginBottom: 10 }}
         />
         <input
           type="password"
@@ -52,6 +32,7 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          style={{ display: 'block', marginBottom: 10 }}
         />
         <button type="submit">Login</button>
       </form>
