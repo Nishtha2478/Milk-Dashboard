@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-
-import Dashboard from './components/Dashboard';
+//import Dashboard from './components/Dashboard';
 import PatientsPage from './components/PatientsPage';
 //import StaffPage from './components/StaffPage';
 //import AppointmentsPage from './components/PatientAppointmentsPage';
 //import FinancePage from './components/FinancePage';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
+//import Home from './components/Home';
+import { BrowserRouter as Routes, Route, Navigate } from 'react-router-dom';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -59,9 +59,8 @@ function App() {
   if (!profile) return <p>No profile found for this user</p>;
 
   return (
-    <Router>
       <Routes>
-        <Route path="/" element={<Dashboard profile={profile} />} />
+        <Route path="/" element={<Login profile={profile} />} />
         <Route path="/patients" element={<PatientsPage profile={profile} />} />
        {/* <Route path="/staff" element={<StaffPage profile={profile} />} />
         <Route path="/appointments" element={<AppointmentsPage profile={profile} />} />
@@ -77,7 +76,6 @@ function App() {
           }
         />
       </Routes>
-    </Router>
   );
 }
 

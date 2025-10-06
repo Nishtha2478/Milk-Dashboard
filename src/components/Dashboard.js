@@ -1,8 +1,16 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-export default function Dashboard({ profile }) {
+export default function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const profile = location.state?.profile;
+
+  if (!profile) {
+    // If no profile data, redirect to login
+    navigate('/');
+    return null;
+  }
 
   return (
     <div>
