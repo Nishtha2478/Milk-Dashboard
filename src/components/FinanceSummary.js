@@ -1,97 +1,153 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
 import { Paper, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
+import { supabase } from '../supabaseClient';
+import ChartHelper from './ChartHelper'; // ensure file name matches exactly
 
 export default function FinanceSummary({ profile }) {
-  const [view, setView] = useState('monthly'); // default view
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [view, setView] = useState('monthly'); // default to monthly
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [dailyData, setDailyData] = useState([]);
+  const [forecastMonths, setForecastMonths] = useState(6);
+  const [chartData, setChartData] = useState([]);
+  const [lastFetchTime, setLastFetchTime] = useState(Date.now());
 
+  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      console.log(`Fetching ${view} finance data...`);
+      const { data, error } = await supabase.from('finance_summary').select('*').order('year', { ascending: true }).order('month', { ascending: true });
+      if (!error && data) {
+        setMonthlyData(data);
 
-      try {
-        let fetchedData;
+        // Generate approximate daily data
+        const dailyRows = [];
+        data.forEach(row => {
+          const daysInMonth = new Date(row.year, row.month, 0).getDate();
+          const dailyIncome = row.total_income / daysInMonth;
+          const dailyExpenses = row.total_expenses / daysInMonth;
+          const dailyProfit = row.profit / daysInMonth;
 
-        if (view === 'monthly') {
-          const { data: monthlyData, error } = await supabase
-            .from('finance_summary')
-            .select('*');
-          if (error) throw error;
-          fetchedData = monthlyData;
-        } else {
-          // Replace this with the correct daily query
-          const { data: dailyData, error } = await supabase
-            .from('transactions')
-            .select(
-              `trans_date, total_income:amt, total_expenses:amt, profit:amt` // example, adjust as needed
-            )
-            .eq('trans_type', 'income'); // for example only
-          if (error) throw error;
-          fetchedData = dailyData;
-        }
+          for (let d = 1; d <= daysInMonth; d++) {
+            dailyRows.push({
+              year: row.year,
+              month: row.month,
+              day: d,
+              total_income: parseFloat(dailyIncome.toFixed(2)),
+              total_expenses: parseFloat(dailyExpenses.toFixed(2)),
+              profit: parseFloat(dailyProfit.toFixed(2)),
+            });
+          }
+        });
 
-        if (!fetchedData || fetchedData.length === 0) {
-          console.warn(`No ${view} finance data found.`);
-          setData([]);
-        } else {
-          console.log(`${view} finance data fetched:`, fetchedData);
-          setData(fetchedData);
-        }
-      } catch (err) {
-        console.error(`Error fetching ${view} finance data:`, err);
-        setError(err);
-        setData([]);
-      } finally {
-        setLoading(false);
+        setDailyData(dailyRows);
+        setLastFetchTime(Date.now());
       }
     };
 
     fetchData();
-  }, [view]);
+  }, []);
 
-  if (loading) return <p>Loading {view} finance...</p>;
-  if (error) return <p style={{ color: 'red' }}>Error: {error.message}</p>;
-  if (!data || data.length === 0) return <p>No {view} finance data found.</p>;
+  // Chart computation
+  useEffect(() => {
+    const sourceData = view === 'monthly' ? monthlyData : dailyData;
+    if (sourceData.length === 0) return;
 
-  const columns = Object.keys(data[0]);
+    const labels = sourceData.map(d =>
+      view === 'monthly'
+        ? `${d.month}/${d.year}`
+        : `${d.month}/${d.day}/${d.year}`
+    );
+    const values = sourceData.map(d => d.profit);
+
+    // Simple linear prediction based on last 3 entries
+    const last3 = values.slice(-3);
+    const growth = last3.length >= 2 ? (last3[last3.length - 1] - last3[0]) / (last3.length - 1) : 0;
+
+    const forecastLabels = [];
+    const forecastValues = [];
+    let lastValue = values[values.length - 1];
+
+    for (let i = 1; i <= forecastMonths; i++) {
+      const lastDate = new Date(sourceData[sourceData.length - 1].year, sourceData[sourceData.length - 1].month - 1, sourceData[sourceData.length - 1].day || 1);
+      lastDate.setMonth(lastDate.getMonth() + i);
+      forecastLabels.push(`${lastDate.getMonth() + 1}/${lastDate.getFullYear()}`);
+      lastValue += growth;
+      forecastValues.push(parseFloat(lastValue.toFixed(2)));
+    }
+
+    setChartData([
+      { x: labels, y: values, name: 'Actual Profit' },
+      { x: forecastLabels, y: forecastValues, name: 'Predicted Profit' },
+    ]);
+  }, [view, monthlyData, dailyData, forecastMonths]);
+
+  const chartTitle = profile.role === 'Department Head'
+    ? `Finance Predictions - ${profile.department} Department`
+    : 'Finance Predictions - All Departments';
+
+  const tableData = view === 'monthly' ? monthlyData : dailyData;
+  const columns = view === 'monthly'
+    ? ['Year', 'Month', 'Total Income', 'Total Expenses', 'Profit']
+    : ['Year', 'Month', 'Day', 'Total Income', 'Total Expenses', 'Profit'];
 
   return (
     <Paper style={{ padding: 20, marginTop: 20 }}>
-      {/* Toggle buttons for Daily/Monthly */}
       <div style={{ marginBottom: 10 }}>
-        <button onClick={() => setView('daily')} disabled={view === 'daily'}>
-          Daily
-        </button>
-        <button onClick={() => setView('monthly')} disabled={view === 'monthly'} style={{ marginLeft: 10 }}>
-          Monthly
-        </button>
+        <button onClick={() => setView('daily')} disabled={view === 'daily'}>Daily</button>
+        <button onClick={() => setView('monthly')} disabled={view === 'monthly'} style={{ marginLeft: 10 }}>Monthly</button>
       </div>
 
       <h3>{view.charAt(0).toUpperCase() + view.slice(1)} Finance Summary</h3>
       <div style={{ overflowX: 'auto' }}>
         <Table>
           <TableHead>
-            <TableRow>
-              {columns.map((col) => (
-                <TableCell key={col}>{col}</TableCell>
-              ))}
-            </TableRow>
+            <TableRow>{columns.map(col => <TableCell key={col}>{col}</TableCell>)}</TableRow>
           </TableHead>
           <TableBody>
-            {data.map((row, idx) => (
-              <TableRow key={idx}>
-                {columns.map((col) => (
-                  <TableCell key={col}>{row[col]}</TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {tableData.map((row, idx) => {
+              const isNew = new Date().getTime() - lastFetchTime < 1000 * 60; // highlight new entries
+              return (
+                <TableRow key={idx} style={isNew ? { backgroundColor: '#e0ffe0' } : {}}>
+                  {view === 'monthly' ? (
+                    <>
+                      <TableCell>{row.year}</TableCell>
+                      <TableCell>{row.month}</TableCell>
+                      <TableCell>{row.total_income}</TableCell>
+                      <TableCell>{row.total_expenses}</TableCell>
+                      <TableCell>{row.profit}</TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell>{row.year}</TableCell>
+                      <TableCell>{row.month}</TableCell>
+                      <TableCell>{row.day}</TableCell>
+                      <TableCell>{row.total_income}</TableCell>
+                      <TableCell>{row.total_expenses}</TableCell>
+                      <TableCell>{row.profit}</TableCell>
+                    </>
+                  )}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <label>
+          Months to forecast:{' '}
+          <input
+            type="number"
+            min="1"
+            max="24"
+            value={forecastMonths}
+            onChange={e => setForecastMonths(parseInt(e.target.value))}
+          />
+        </label>
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <h3>{chartTitle}</h3>
+        <ChartHelper dataArray={chartData} title={chartTitle} yAxisTitle="Profit" />
       </div>
     </Paper>
   );
