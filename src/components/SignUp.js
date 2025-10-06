@@ -1,112 +1,71 @@
-import { useState } from 'react'
-import { supabase } from '../supabaseClient'
+import { useState } from 'react';
+import { supabase } from '../supabaseClient';
 
-export default function SignUp() {
-  const [userAct, setUserAct] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
+export default function SignUp({ onLogin }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [error, setError] = useState(null);
 
   const handleSignUp = async (e) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
+    const { data: userData, error: signUpError } = await supabase.auth.signUp({ email, password });
+    if (signUpError) return setError(signUpError.message);
 
-    try {
-      // Create user in Supabase auth
-      const email = `${username}@milk.local`;
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password
-      })
+    // Insert profile
+    const { error: profileError } = await supabase.from('profiles').insert([{
+      auth_id: userData.user.id,
+      first_name: firstName,
+      last_name: lastName,
+      role: 'User' // default role
+    }]);
+    if (profileError) return setError(profileError.message);
 
-      if (signUpError) {
-        setError(signUpError.message)
-        return
-      }
-
-      const userId = authData.user.id
-
-      // Create profile in your profiles table
-      const { error: profileError } = await supabase.from('profiles').insert([
-        {
-          id: userId,      // use auth user ID
-          user_act: userAct,
-          email: email,
-          role: 'staff'    // default role
-        }
-      ])
-
-      if (profileError) {
-        setError(profileError.message)
-        return
-      }
-
-      setSuccess(true)
-      setUserAct('')
-      setEmail('')
-      setPassword('')
-      setConfirmPassword('')
-    } catch (err) {
-      setError(err.message)
-    }
-  }
+    onLogin(userData.user);
+  };
 
   return (
     <div style={{ padding: 20 }}>
       <h2>Sign Up</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>Sign up successful! Check your email to confirm.</p>}
-
       <form onSubmit={handleSignUp}>
-        <div>
-          <label>Username:</label>
-          <input
-            type="text"
-            value={userAct}
-            onChange={(e) => setUserAct(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label>Email:</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label>Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label>Confirm Password:</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-        </div>
-
+        <input
+          type="text"
+          placeholder="First Name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          required
+          style={{ display: 'block', marginBottom: 10 }}
+        />
+        <input
+          type="text"
+          placeholder="Last Name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          required
+          style={{ display: 'block', marginBottom: 10 }}
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={{ display: 'block', marginBottom: 10 }}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          style={{ display: 'block', marginBottom: 10 }}
+        />
         <button type="submit">Sign Up</button>
       </form>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
-  )
+  );
 }

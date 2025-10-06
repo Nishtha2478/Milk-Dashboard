@@ -7,17 +7,24 @@ import PatientAppointments from './components/PatientAppointments';
 import FinanceSummary from './components/FinanceSummary';
 import Supplies from './components/Supplies';
 import Transactions from './components/Transactions';
-import './index.css'; // your plain CSS
+import SignUp from './components/SignUp'; 
+import './index.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Listen for auth changes
+  const [showPatients, setShowPatients] = useState(true);
+  const [showStaff, setShowStaff] = useState(true);
+  const [showFinance, setShowFinance] = useState(true);
+  const [showSupplies, setShowSupplies] = useState(true);
+  const [showAppointments, setShowAppointments] = useState(true);
+  const [showTransactions, setShowTransactions] = useState(true);
+  const [showSignUp, setShowSignUp] = useState(true); 
+
   useEffect(() => {
     let isMounted = true;
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (isMounted) setUser(session?.user ?? null);
     });
@@ -32,9 +39,7 @@ function App() {
     };
   }, []);
 
-  console.log('Logged-in user ID:', user?.id);
-
-  // Fetch profile for logged-in user
+  // Fetch profile
   useEffect(() => {
     if (!user) {
       setProfile(null);
@@ -44,13 +49,11 @@ function App() {
 
     const fetchProfile = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('auth_id', user.id)
         .maybeSingle();
-
-      console.log('Profile fetch result:', data, error);
       setProfile(data);
       setLoading(false);
     };
@@ -61,6 +64,8 @@ function App() {
   if (loading) return <p>Loading...</p>;
   if (!user) return <Login onLogin={setUser} />;
   if (!profile) return <p>No profile found for this user</p>;
+
+  const canSeeSignUp = profile.role === 'Owner' || profile.role === 'Supervisor'; // <--- DEFINE
 
   return (
     <div className="app-container">
@@ -78,12 +83,63 @@ function App() {
       </header>
 
       <main className="app-main">
-        <Patients profile={profile} />
-        <Staff profile={profile} />
-        <FinanceSummary profile={profile} />
-        <Supplies profile={profile} />
-        <PatientAppointments profile={profile} />
-        <Transactions profile={profile} />
+        {/* Patients Section */}
+        <div className="section">
+          <h2 onClick={() => setShowPatients(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Patients {showPatients ? '▲' : '▼'}
+          </h2>
+          {showPatients && <Patients profile={profile} />}
+        </div>
+
+        {/* Staff Section */}
+        <div className="section">
+          <h2 onClick={() => setShowStaff(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Staff {showStaff ? '▲' : '▼'}
+          </h2>
+          {showStaff && <Staff profile={profile} />}
+        </div>
+
+        {/* Finance Section */}
+        <div className="section">
+          <h2 onClick={() => setShowFinance(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Finance Summary {showFinance ? '▲' : '▼'}
+          </h2>
+          {showFinance && <FinanceSummary profile={profile} />}
+        </div>
+
+        {/* Supplies Section */}
+        <div className="section">
+          <h2 onClick={() => setShowSupplies(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Supplies {showSupplies ? '▲' : '▼'}
+          </h2>
+          {showSupplies && <Supplies profile={profile} />}
+        </div>
+
+        {/* Appointments Section */}
+        <div className="section">
+          <h2 onClick={() => setShowAppointments(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Appointments {showAppointments ? '▲' : '▼'}
+          </h2>
+          {showAppointments && <PatientAppointments profile={profile} />}
+        </div>
+
+        {/* Transactions Section */}
+        <div className="section">
+          <h2 onClick={() => setShowTransactions(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Transactions {showTransactions ? '▲' : '▼'}
+          </h2>
+          {showTransactions && <Transactions profile={profile} />}
+        </div>
+
+        {/* Sign Up Section - Only for Owner/Supervisor */}
+        {canSeeSignUp && (
+          <div className="section">
+            <h2 onClick={() => setShowSignUp(prev => !prev)} style={{ cursor: 'pointer' }}>
+              Sign Up {showSignUp ? '▲' : '▼'}
+            </h2>
+            {showSignUp && <SignUp profile={profile} />}
+          </div>
+        )}
       </main>
     </div>
   );

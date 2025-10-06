@@ -1,159 +1,98 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Paper, Table, TableHead, TableBody, TableRow, TableCell, CircularProgress } from '@mui/material';
+import { Paper, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 
 export default function FinanceSummary({ profile }) {
-  const [dailyData, setDailyData] = useState([]);
-  const [monthlyData, setMonthlyData] = useState([]);
+  const [view, setView] = useState('monthly'); // default view
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const prevDailyData = useRef([]);
-  const prevMonthlyData = useRef([]);
-
-  // Function to fetch finance data
-  const fetchFinanceData = useCallback(async () => {
-    const allowedRoles = ['Owner', 'Supervisor', 'Department Head'];
-    if (!profile) return;
-
-    if (!allowedRoles.includes(profile.role)) {
-      setDailyData([]);
-      setMonthlyData([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // Fetch daily summary
-      const { data: daily, error: dailyError } = await supabase
-        .from('finance_summary')
-        .select('*')
-        .order('year', { ascending: false })
-        .order('month', { ascending: false });
-
-      if (dailyError) throw dailyError;
-
-      // Add day column if missing (random for display)
-      const dailyWithDay = (daily || []).map(row => ({
-        ...row,
-        day: row.day || Math.floor(Math.random() * 28) + 1
-      }));
-
-      // Save previous before updating state
-      prevDailyData.current = dailyData;
-      setDailyData(dailyWithDay);
-
-      // Fetch monthly summary
-      const { data: monthly, error: monthlyError } = await supabase
-        .from('finance_summary')
-        .select('*')
-        .order('year', { ascending: false })
-        .order('month', { ascending: false });
-
-      if (monthlyError) throw monthlyError;
-
-      prevMonthlyData.current = monthlyData;
-      setMonthlyData(monthly || []);
-
-    } catch (err) {
-      console.error('Error fetching finance data:', err);
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [profile, dailyData, monthlyData]);
-
-  // Initial fetch and 10-minute interval refresh
   useEffect(() => {
-    if (!profile) return;
-    fetchFinanceData();
-    const interval = setInterval(fetchFinanceData, 10 * 60 * 1000); // 10 min
-    return () => clearInterval(interval);
-  }, [profile]);
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      console.log(`Fetching ${view} finance data...`);
 
-  const highlightChange = (prev, current) => prev !== current ? { backgroundColor: '#fffae6' } : {};
+      try {
+        let fetchedData;
 
-  // Loading/Error states
-  if (!profile) return <p>Loading profile...</p>;
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><CircularProgress size={20} /> Loading finance data...</div>;
-  if (error) return <p style={{ color: 'red' }}>Error loading finance data: {error.message}</p>;
-  if (!dailyData.length && !monthlyData.length) return <p>No finance data available.</p>;
+        if (view === 'monthly') {
+          const { data: monthlyData, error } = await supabase
+            .from('finance_summary')
+            .select('*');
+          if (error) throw error;
+          fetchedData = monthlyData;
+        } else {
+          // Replace this with the correct daily query
+          const { data: dailyData, error } = await supabase
+            .from('transactions')
+            .select(
+              `trans_date, total_income:amt, total_expenses:amt, profit:amt` // example, adjust as needed
+            )
+            .eq('trans_type', 'income'); // for example only
+          if (error) throw error;
+          fetchedData = dailyData;
+        }
+
+        if (!fetchedData || fetchedData.length === 0) {
+          console.warn(`No ${view} finance data found.`);
+          setData([]);
+        } else {
+          console.log(`${view} finance data fetched:`, fetchedData);
+          setData(fetchedData);
+        }
+      } catch (err) {
+        console.error(`Error fetching ${view} finance data:`, err);
+        setError(err);
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [view]);
+
+  if (loading) return <p>Loading {view} finance...</p>;
+  if (error) return <p style={{ color: 'red' }}>Error: {error.message}</p>;
+  if (!data || data.length === 0) return <p>No {view} finance data found.</p>;
+
+  const columns = Object.keys(data[0]);
 
   return (
-    <div>
-      {/* Daily Table */}
-      <Paper style={{ padding: 20, marginBottom: 20 }}>
-        <h2>Daily Finance Summary</h2>
-        <div style={{ overflowX: 'auto' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Year</TableCell>
-                <TableCell>Month</TableCell>
-                <TableCell>Day</TableCell>
-                <TableCell>Total Income</TableCell>
-                <TableCell>Total Expenses</TableCell>
-                <TableCell>Profit</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {dailyData.map((row, idx) => (
-                <TableRow key={`${row.year}-${row.month}-${row.day}`}>
-                  <TableCell>{row.year}</TableCell>
-                  <TableCell>{row.month}</TableCell>
-                  <TableCell>{row.day}</TableCell>
-                  <TableCell style={highlightChange(prevDailyData.current[idx]?.total_income, row.total_income)}>
-                    {row.total_income}
-                  </TableCell>
-                  <TableCell style={highlightChange(prevDailyData.current[idx]?.total_expenses, row.total_expenses)}>
-                    {row.total_expenses}
-                  </TableCell>
-                  <TableCell style={highlightChange(prevDailyData.current[idx]?.profit, row.profit)}>
-                    {row.profit}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </Paper>
+    <Paper style={{ padding: 20, marginTop: 20 }}>
+      {/* Toggle buttons for Daily/Monthly */}
+      <div style={{ marginBottom: 10 }}>
+        <button onClick={() => setView('daily')} disabled={view === 'daily'}>
+          Daily
+        </button>
+        <button onClick={() => setView('monthly')} disabled={view === 'monthly'} style={{ marginLeft: 10 }}>
+          Monthly
+        </button>
+      </div>
 
-      {/* Monthly Table */}
-      <Paper style={{ padding: 20 }}>
-        <h2>Monthly Finance Summary</h2>
-        <div style={{ overflowX: 'auto' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Year</TableCell>
-                <TableCell>Month</TableCell>
-                <TableCell>Total Income</TableCell>
-                <TableCell>Total Expenses</TableCell>
-                <TableCell>Profit</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {monthlyData.map((row, idx) => (
-                <TableRow key={`${row.year}-${row.month}`}>
-                  <TableCell>{row.year}</TableCell>
-                  <TableCell>{row.month}</TableCell>
-                  <TableCell style={highlightChange(prevMonthlyData.current[idx]?.total_income, row.total_income)}>
-                    {row.total_income}
-                  </TableCell>
-                  <TableCell style={highlightChange(prevMonthlyData.current[idx]?.total_expenses, row.total_expenses)}>
-                    {row.total_expenses}
-                  </TableCell>
-                  <TableCell style={highlightChange(prevMonthlyData.current[idx]?.profit, row.profit)}>
-                    {row.profit}
-                  </TableCell>
-                </TableRow>
+      <h3>{view.charAt(0).toUpperCase() + view.slice(1)} Finance Summary</h3>
+      <div style={{ overflowX: 'auto' }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {columns.map((col) => (
+                <TableCell key={col}>{col}</TableCell>
               ))}
-            </TableBody>
-          </Table>
-        </div>
-      </Paper>
-    </div>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.map((row, idx) => (
+              <TableRow key={idx}>
+                {columns.map((col) => (
+                  <TableCell key={col}>{row[col]}</TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </Paper>
   );
 }
