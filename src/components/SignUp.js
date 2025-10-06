@@ -1,13 +1,20 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 
-export default function SignUp() {
+export default function SignUp({ profile }) {
   const [userAct, setUserAct] = useState('')
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+
+  if (!profile) return <p>Loading profile...</p>
+
+  // Restrict access to Owner and Supervisor only
+  const allowedRoles = ['Owner', 'Supervisor']
+  if (!allowedRoles.includes(profile.role)) {
+    return <p>You do not have permission to access this page.</p>
+  }
 
   const handleSignUp = async (e) => {
     e.preventDefault()
@@ -19,8 +26,7 @@ export default function SignUp() {
     }
 
     try {
-      // Create user in Supabase auth
-      const email = `${username}@milk.local`;
+      const email = `${userAct}@milk.local`  // create email from username
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password
@@ -33,13 +39,12 @@ export default function SignUp() {
 
       const userId = authData.user.id
 
-      // Create profile in your profiles table
       const { error: profileError } = await supabase.from('profiles').insert([
         {
-          id: userId,      // use auth user ID
+          id: userId,
           user_act: userAct,
           email: email,
-          role: 'staff'    // default role
+          role: 'staff'  // default role for new accounts
         }
       ])
 
@@ -50,7 +55,6 @@ export default function SignUp() {
 
       setSuccess(true)
       setUserAct('')
-      setEmail('')
       setPassword('')
       setConfirmPassword('')
     } catch (err) {
@@ -71,16 +75,6 @@ export default function SignUp() {
             type="text"
             value={userAct}
             onChange={(e) => setUserAct(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label>Email:</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>

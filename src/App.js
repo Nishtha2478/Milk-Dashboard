@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
+
+import Dashboard from './components/Dashboard';
+import PatientsPage from './components/PatientsPage';
+//import StaffPage from './components/StaffPage';
+//import AppointmentsPage from './components/PatientAppointmentsPage';
+//import FinancePage from './components/FinancePage';
 import Login from './components/Login';
-import Patients from './components/Patients';
-import Staff from './components/Staff';
-import PatientAppointments from './components/PatientAppointments';
-import FinanceSummary from './components/FinanceSummary';
-import Supplies from './components/Supplies';
-import Transactions from './components/Transactions';
-import './index.css'; // your plain CSS
+import SignUp from './components/SignUp';
 
 function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Listen for auth changes
   useEffect(() => {
     let isMounted = true;
 
@@ -32,9 +32,6 @@ function App() {
     };
   }, []);
 
-  console.log('Logged-in user ID:', user?.id);
-
-  // Fetch profile for logged-in user
   useEffect(() => {
     if (!user) {
       setProfile(null);
@@ -44,13 +41,12 @@ function App() {
 
     const fetchProfile = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('auth_id', user.id)
         .maybeSingle();
 
-      console.log('Profile fetch result:', data, error);
       setProfile(data);
       setLoading(false);
     };
@@ -63,29 +59,25 @@ function App() {
   if (!profile) return <p>No profile found for this user</p>;
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <h1>Milk Dashboard</h1>
-        <button
-          className="logout-button"
-          onClick={async () => {
-            await supabase.auth.signOut();
-            setUser(null);
-          }}
-        >
-          Logout
-        </button>
-      </header>
-
-      <main className="app-main">
-        <Patients profile={profile} />
-        <Staff profile={profile} />
-        <FinanceSummary profile={profile} />
-        <Supplies profile={profile} />
-        <PatientAppointments profile={profile} />
-        <Transactions profile={profile} />
-      </main>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Dashboard profile={profile} />} />
+        <Route path="/patients" element={<PatientsPage profile={profile} />} />
+       {/* <Route path="/staff" element={<StaffPage profile={profile} />} />
+        <Route path="/appointments" element={<AppointmentsPage profile={profile} />} />
+        <Route path="/finance" element={<FinancePage profile={profile} />} /> */}
+        <Route
+          path="/signup"
+          element={
+            profile.role === 'Owner' || profile.role === 'Supervisor' ? (
+              <SignUp profile={profile} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 

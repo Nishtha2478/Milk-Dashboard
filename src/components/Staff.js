@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Paper, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
+import { Paper, Table, TableHead, TableBody, TableRow, TableCell, Button  } from '@mui/material';
 
 function Staff({ profile }) {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!profile) return;
 
@@ -54,7 +54,13 @@ function Staff({ profile }) {
 
   return (
     <Paper style={{ padding: 20, marginTop: 20 }}>
-      <h2>Staff</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ margin: 0 }}>Staff</h2>
+            <Button variant="contained" onClick={() => setOpen(!open)}>
+              {open ? 'Collapse' : 'Expand'}
+            </Button>
+          </div>
+      {open && (
       <div style={{ overflowX: 'auto' }}>
         <Table>
           <TableHead>
@@ -141,6 +147,7 @@ function Staff({ profile }) {
           </TableBody>
         </Table>
       </div>
+      )}
     </Paper>
   );
 }

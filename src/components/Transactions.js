@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
-import { Paper, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
+import { Paper, Table, TableHead, TableBody, TableRow, TableCell, Button } from '@mui/material';
 
 export default function Transactions({ profile }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-const allowedRoles = useMemo(() => ['Owner', 'Supervisor', 'Department Head'], []);
-
+  const allowedRoles = useMemo(() => ['Owner', 'Supervisor', 'Department Head'], []);
+  const [open, setOpen] = useState(false);
 
   const fetchTransactionData = useCallback(async () => {
     if (!profile) {
@@ -52,9 +52,15 @@ const allowedRoles = useMemo(() => ['Owner', 'Supervisor', 'Department Head'], [
   if (!transactions || transactions.length === 0) return <p>No transactions found.</p>;
 
   return (
-    <Paper style={{ padding: 20 }}>
-      <h2>Transactions</h2>
-      <div style={{ overflowX: 'auto' }}>
+     <Paper style={{ padding: 20, marginTop: 20 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h2 style={{ margin: 0 }}>Transactions</h2>
+                        <Button variant="contained" onClick={() => setOpen(!open)}>
+                          {open ? 'Collapse' : 'Expand'}
+                        </Button>
+                      </div>
+        {open && (
+    <div style={{ overflowX: 'auto' }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -78,6 +84,7 @@ const allowedRoles = useMemo(() => ['Owner', 'Supervisor', 'Department Head'], [
           </TableBody>
         </Table>
       </div>
+        )}
     </Paper>
   );
 }

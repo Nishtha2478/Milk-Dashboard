@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
-import { Paper, Table, TableHead, TableBody, TableRow, TableCell, CircularProgress } from '@mui/material';
+import { Paper, Table, TableHead, TableBody, TableRow, TableCell, CircularProgress, Button } from '@mui/material';
 
 
 function PatientAppointments({ profile }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
- const allowedRoles = useMemo(() => ['Owner', 'Supervisor', 'Department Head'], []);
+  const allowedRoles = useMemo(() => ['Owner', 'Supervisor', 'Department Head'], []);
+  const [open, setOpen] = useState(false);
 
 const fetchPatientAppointments = useCallback(async () => {
   if (!profile) return;
@@ -80,8 +81,14 @@ const fetchPatientAppointments = useCallback(async () => {
   if (!appointments.length) return <p>No appointments found.</p>;
 
   return (
-    <Paper style={{ padding: 20 }}>
-      <h3>Patient Appointments</h3>
+    <Paper style={{ padding: 20, marginTop: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2 style={{ margin: 0 }}>Patient Appointments</h2>
+                    <Button variant="contained" onClick={() => setOpen(!open)}>
+                      {open ? 'Collapse' : 'Expand'}
+                    </Button>
+                  </div>
+    {open && (
       <div style={{ overflowX: 'auto' }}>
         <Table>
           <TableHead>
@@ -108,6 +115,7 @@ const fetchPatientAppointments = useCallback(async () => {
           </TableBody>
         </Table>
       </div>
+    )}
     </Paper>
   );
 }
