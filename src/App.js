@@ -9,6 +9,7 @@ import Supplies from './components/Supplies';
 import Transactions from './components/Transactions';
 import SignUp from './components/SignUp'; 
 import './index.css';
+import './app.css';
 
 function App() {
   const [user, setUser] = useState(null);
