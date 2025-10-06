@@ -1,90 +1,41 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Paper, Table, TableHead, TableBody, TableRow, TableCell, Button } from '@mui/material';
+import { Paper, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 
 export default function Transactions({ profile }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const allowedRoles = useMemo(() => ['Owner', 'Supervisor', 'Department Head'], []);
-  const [open, setOpen] = useState(false);
 
-  const fetchTransactionData = useCallback(async () => {
-    if (!profile) {
-      console.log('No profile provided');
-      return;
-    }
-
-    const hasAccess = allowedRoles.includes(profile.role);
-    if (!hasAccess) {
-      console.log('User does not have access');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const { data, error: fetchError } = await supabase
-        .from('transactions')
-        .select('*');
-      console.log(data);  
-      if (fetchError) throw fetchError;
-
-      console.log('Fetched transactions:', data);
-      setTransactions(data || []);
-    } catch (err) {
-      console.error('Error fetching transactions:', err);
-      setError(err);
-    } finally {
-      setLoading(false);
-      console.log('Finished fetchTransactions');
-    }
-  }, [profile, allowedRoles]);
-
-  // Trigger fetch when profile changes
   useEffect(() => {
-    fetchTransactionData();
-  }, [fetchTransactionData]);
+    const fetchTransactions = async () => {
+      const { data, error } = await supabase.from('transactions').select('*');
+      if (!error) setTransactions(data || []);
+      setLoading(false);
+    };
+    fetchTransactions();
+  }, []);
 
   if (loading) return <p>Loading transactions...</p>;
-  if (error) return <p style={{ color: 'red' }}>Error loading transactions: {error.message}</p>;
-  if (!transactions || transactions.length === 0) return <p>No transactions found.</p>;
+  if (transactions.length === 0) return <p>No transaction data found.</p>;
+
+  const columns = Object.keys(transactions[0]);
 
   return (
-     <Paper style={{ padding: 20, marginTop: 20 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h2 style={{ margin: 0 }}>Transactions</h2>
-                        <Button variant="contained" onClick={() => setOpen(!open)}>
-                          {open ? 'Collapse' : 'Expand'}
-                        </Button>
-                      </div>
-        {open && (
-    <div style={{ overflowX: 'auto' }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Transaction Type</TableCell>
-              <TableCell>Description</TableCell>
+    <Paper style={{ padding: 20, marginTop: 20, overflowX: 'auto' }}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            {columns.map((col) => <TableCell key={col}>{col}</TableCell>)}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {transactions.map((t) => (
+            <TableRow key={t.id}>
+              {columns.map((col) => <TableCell key={col}>{t[col]}</TableCell>)}
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {transactions.map((t) => (
-              <TableRow key={t.id}>
-                <TableCell>{t.trans_id}</TableCell>
-                <TableCell>{t.amt}</TableCell>
-                <TableCell>{t.trans_date}</TableCell>
-                <TableCell>{t.trans_type}</TableCell>
-                <TableCell>{t.description}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-        )}
+          ))}
+        </TableBody>
+      </Table>
     </Paper>
   );
 }
