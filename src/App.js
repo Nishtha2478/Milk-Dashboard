@@ -1,23 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
-//import Dashboard from './components/Dashboard';
-import PatientsPage from './components/PatientsPage';
-//import StaffPage from './components/StaffPage';
-//import AppointmentsPage from './components/PatientAppointmentsPage';
-//import FinancePage from './components/FinancePage';
 import Login from './components/Login';
-import SignUp from './components/SignUp';
-//import Home from './components/Home';
-import { BrowserRouter as Routes, Route, Navigate } from 'react-router-dom';
+import Patients from './components/Patients';
+import Staff from './components/Staff';
+import PatientAppointments from './components/PatientAppointments';
+import FinanceSummary from './components/FinanceSummary';
+import Supplies from './components/Supplies';
+import Transactions from './components/Transactions';
+import SignUp from './components/SignUp'; 
+import './index.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [showPatients, setShowPatients] = useState(true);
+  const [showStaff, setShowStaff] = useState(true);
+  const [showFinance, setShowFinance] = useState(true);
+  const [showSupplies, setShowSupplies] = useState(true);
+  const [showAppointments, setShowAppointments] = useState(true);
+  const [showTransactions, setShowTransactions] = useState(true);
+  const [showSignUp, setShowSignUp] = useState(true); 
+
   useEffect(() => {
     let isMounted = true;
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (isMounted) setUser(session?.user ?? null);
     });
@@ -32,6 +39,7 @@ function App() {
     };
   }, []);
 
+  // Fetch profile
   useEffect(() => {
     if (!user) {
       setProfile(null);
@@ -46,7 +54,6 @@ function App() {
         .select('*')
         .eq('auth_id', user.id)
         .maybeSingle();
-
       setProfile(data);
       setLoading(false);
     };
@@ -58,24 +65,83 @@ function App() {
   if (!user) return <Login onLogin={setUser} />;
   if (!profile) return <p>No profile found for this user</p>;
 
+  const canSeeSignUp = profile.role === 'Owner' || profile.role === 'Supervisor'; // <--- DEFINE
+
   return (
-      <Routes>
-        <Route path="/" element={<Login profile={profile} />} />
-        <Route path="/patients" element={<PatientsPage profile={profile} />} />
-       {/* <Route path="/staff" element={<StaffPage profile={profile} />} />
-        <Route path="/appointments" element={<AppointmentsPage profile={profile} />} />
-        <Route path="/finance" element={<FinancePage profile={profile} />} /> */}
-        <Route
-          path="/signup"
-          element={
-            profile.role === 'Owner' || profile.role === 'Supervisor' ? (
-              <SignUp profile={profile} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-      </Routes>
+    <div className="app-container">
+      <header className="app-header">
+        <h1>Milk Dashboard</h1>
+        <button
+          className="logout-button"
+          onClick={async () => {
+            await supabase.auth.signOut();
+            setUser(null);
+          }}
+        >
+          Logout
+        </button>
+      </header>
+
+      <main className="app-main">
+        {/* Patients Section */}
+        <div className="section">
+          <h2 onClick={() => setShowPatients(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Patients {showPatients ? '▲' : '▼'}
+          </h2>
+          {showPatients && <Patients profile={profile} />}
+        </div>
+
+        {/* Staff Section */}
+        <div className="section">
+          <h2 onClick={() => setShowStaff(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Staff {showStaff ? '▲' : '▼'}
+          </h2>
+          {showStaff && <Staff profile={profile} />}
+        </div>
+
+        {/* Finance Section */}
+        <div className="section">
+          <h2 onClick={() => setShowFinance(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Finance Summary {showFinance ? '▲' : '▼'}
+          </h2>
+          {showFinance && <FinanceSummary profile={profile} />}
+        </div>
+
+        {/* Supplies Section */}
+        <div className="section">
+          <h2 onClick={() => setShowSupplies(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Supplies {showSupplies ? '▲' : '▼'}
+          </h2>
+          {showSupplies && <Supplies profile={profile} />}
+        </div>
+
+        {/* Appointments Section */}
+        <div className="section">
+          <h2 onClick={() => setShowAppointments(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Appointments {showAppointments ? '▲' : '▼'}
+          </h2>
+          {showAppointments && <PatientAppointments profile={profile} />}
+        </div>
+
+        {/* Transactions Section */}
+        <div className="section">
+          <h2 onClick={() => setShowTransactions(prev => !prev)} style={{ cursor: 'pointer' }}>
+            Transactions {showTransactions ? '▲' : '▼'}
+          </h2>
+          {showTransactions && <Transactions profile={profile} />}
+        </div>
+
+        {/* Sign Up Section - Only for Owner/Supervisor */}
+        {canSeeSignUp && (
+          <div className="section">
+            <h2 onClick={() => setShowSignUp(prev => !prev)} style={{ cursor: 'pointer' }}>
+              Sign Up {showSignUp ? '▲' : '▼'}
+            </h2>
+            {showSignUp && <SignUp profile={profile} />}
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
 
