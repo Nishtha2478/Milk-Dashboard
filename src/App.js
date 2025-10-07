@@ -79,11 +79,11 @@ function App() {
   const canSeeAllDepartments = profile.role === 'Owner' || profile.role === 'Supervisor';
 
   return (
-    <div style={styles.appContainer}>
-      <header style={styles.appHeader}>
-        <h1 style={styles.appHeaderTitle}>Milk Dashboard</h1>
+    <div className="app-container">
+      <header className="appHeader">
+        <h1 className="appHeaderTitle">Milk Dashboard</h1>
         <button
-          style={styles.logoutButton}
+          sclassName="logoutButton"
           onMouseOver={e => (e.currentTarget.style.backgroundColor = styles.logoutButtonHover.backgroundColor)}
           onMouseOut={e => (e.currentTarget.style.backgroundColor = styles.logoutButton.backgroundColor)}
           onClick={async () => {
@@ -95,10 +95,10 @@ function App() {
         </button>
       </header>
 
-      <main style={styles.appMain}>
+      <main className= "appMain">
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle} onClick={() => setShowPatients(prev => !prev)}>
+          <div className="section">
+            <h2 className="sectionTitle" onClick={() => setShowPatients(prev => !prev)}>
               Patients {showPatients ? '▲' : '▼'}
             </h2>
             {showPatients && <Patients profile={profile} />}
@@ -106,8 +106,8 @@ function App() {
         )}
 
         {canSeeAllDepartments && (
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle} onClick={() => setShowStaff(prev => !prev)}>
+          <div className="section">
+            <h2 className="sectionTitle" onClick={() => setShowStaff(prev => !prev)}>
               Staff {showStaff ? '▲' : '▼'}
             </h2>
             {showStaff && <Staff profile={profile} />}
@@ -115,8 +115,8 @@ function App() {
         )}
 
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle} onClick={() => setShowFinance(prev => !prev)}>
+          <div className="section">
+            <h2 className="sectionTitle"onClick={() => setShowFinance(prev => !prev)}>
               Finance Summary {showFinance ? '▲' : '▼'}
             </h2>
             {showFinance && <FinanceSummary profile={profile} />}
@@ -124,8 +124,8 @@ function App() {
         )}
 
         {canSeeAllDepartments && (
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle} onClick={() => setShowSupplies(prev => !prev)}>
+          <div className="section">
+            <h2 className="sectionTitle" onClick={() => setShowSupplies(prev => !prev)}>
               Supplies {showSupplies ? '▲' : '▼'}
             </h2>
             {showSupplies && <Supplies profile={profile} />}
@@ -133,8 +133,8 @@ function App() {
         )}
 
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle} onClick={() => setShowAppointments(prev => !prev)}>
+          <div className="section">
+            <h2 className="sectionTitle" onClick={() => setShowAppointments(prev => !prev)}>
               Appointments {showAppointments ? '▲' : '▼'}
             </h2>
             {showAppointments && <PatientAppointments profile={profile} />}
@@ -142,8 +142,8 @@ function App() {
         )}
 
         {canSeeAllDepartments && (
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle} onClick={() => setShowTransactions(prev => !prev)}>
+          <div className="section">
+            <h2 className="sectionTitle" onClick={() => setShowTransactions(prev => !prev)}>
               Transactions {showTransactions ? '▲' : '▼'}
             </h2>
             {showTransactions && <Transactions profile={profile} />}
@@ -151,8 +151,8 @@ function App() {
         )}
 
         {canSeeSignUp && (
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle} onClick={() => setShowSignUp(prev => !prev)}>
+          <div className="section">
+            <h2 className="sectionTitle" onClick={() => setShowSignUp(prev => !prev)}>
               Sign Up {showSignUp ? '▲' : '▼'}
             </h2>
             {showSignUp && <SignUp profile={profile} />}
