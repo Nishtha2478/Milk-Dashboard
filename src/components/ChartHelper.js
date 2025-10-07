@@ -1,11 +1,16 @@
-// src/chartHelper.js
 import React from 'react';
 import Plot from 'react-plotly.js';
 
+/**
+ * Renders a Plotly chart with Actual vs Predicted series.
+ * @param {Array} dataArray - Array of objects: [{ x: [], y: [], name: string }]
+ * @param {string} title - Chart title
+ * @param {string} yAxisTitle - Y-axis title
+ */
 export default function ChartHelper({ dataArray, title, yAxisTitle = 'Value' }) {
-  const colors = ['#1f77b4', '#ff7f0e'];
+  const colors = ['#1f77b4', '#ff7f0e']; // Actual / Predicted
 
-  const mappedData = dataArray.map((d, idx) => ({
+  const mappedData = (dataArray || []).map((d, idx) => ({
     x: d.x || [],
     y: d.y || [],
     type: 'scatter',
@@ -19,7 +24,7 @@ export default function ChartHelper({ dataArray, title, yAxisTitle = 'Value' }) 
     <Plot
       data={mappedData}
       layout={{
-        title: title,
+        title,
         xaxis: { title: 'Month' },
         yaxis: { title: yAxisTitle },
         autosize: true,

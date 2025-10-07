@@ -7,7 +7,7 @@ import PatientAppointments from './components/PatientAppointments';
 import FinanceSummary from './components/FinanceSummary';
 import Supplies from './components/Supplies';
 import Transactions from './components/Transactions';
-import SignUp from './components/SignUp';
+import SignUp from './components/SignUp'; 
 import './index.css';
 import '.App.css';
 function App() {
@@ -23,15 +23,6 @@ function App() {
   const [showTransactions, setShowTransactions] = useState(true);
   const [showSignUp, setShowSignUp] = useState(true);
 
-  // Apply body styles globally
-  useEffect(() => {
-    Object.assign(document.body.style, styles.body);
-      supabase.auth.getSession().then(({ data: { session } }) => {
-    console.log('session', session);
-    setUser(session?.user ?? null);
-  });
-  }, []);
-  
   // Auth listener
   useEffect(() => {
     let isMounted = true;
@@ -75,8 +66,7 @@ function App() {
   if (!user) return <Login onLogin={setUser} />;
   if (!profile) return <p>No profile found for this user</p>;
 
-  const canSeeSignUp = profile.role === 'Owner' || profile.role === 'Supervisor';
-  const canSeeAllDepartments = profile.role === 'Owner' || profile.role === 'Supervisor';
+  const canSeeSignUp = profile.role === 'Owner' || profile.role === 'Supervisor'; // <--- DEFINE
 
   return (
     <div className="app-container">
@@ -95,55 +85,68 @@ function App() {
         </button>
       </header>
 
-      <main className= "appMain">
+      <main className="app-main">
+        {/* Patients Section */}
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
           <div className="section">
-            <h2 className="sectionTitle" onClick={() => setShowPatients(prev => !prev)}>
+            <h2
+              onClick={() => setShowPatients(prev => !prev)}
+              style={{ cursor: 'pointer' }}
+            >
               Patients {showPatients ? '▲' : '▼'}
             </h2>
-            {showPatients && <Patients profile={profile} />}
+            {showPatients && (
+              <>
+                <Patients profile={profile} />
+              </>
+            )}
           </div>
         )}
 
+        {/* Staff Section */}
         {canSeeAllDepartments && (
           <div className="section">
-            <h2 className="sectionTitle" onClick={() => setShowStaff(prev => !prev)}>
+            <h2 onClick={() => setShowStaff(prev => !prev)} style={{ cursor: 'pointer' }}>
               Staff {showStaff ? '▲' : '▼'}
             </h2>
             {showStaff && <Staff profile={profile} />}
           </div>
         )}
 
+        {/* Finance Section */}
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
           <div className="section">
-            <h2 className="sectionTitle"onClick={() => setShowFinance(prev => !prev)}>
+            <h2 onClick={() => setShowFinance(prev => !prev)} style={{ cursor: 'pointer' }}>
               Finance Summary {showFinance ? '▲' : '▼'}
             </h2>
             {showFinance && <FinanceSummary profile={profile} />}
           </div>
         )}
 
+        {/* Supplies Section */}
         {canSeeAllDepartments && (
           <div className="section">
-            <h2 className="sectionTitle" onClick={() => setShowSupplies(prev => !prev)}>
+            <h2 onClick={() => setShowSupplies(prev => !prev)} style={{ cursor: 'pointer' }}>
               Supplies {showSupplies ? '▲' : '▼'}
             </h2>
             {showSupplies && <Supplies profile={profile} />}
           </div>
         )}
 
+        {/* Appointments Section */}
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
           <div className="section">
-            <h2 className="sectionTitle" onClick={() => setShowAppointments(prev => !prev)}>
+            <h2 onClick={() => setShowAppointments(prev => !prev)} style={{ cursor: 'pointer' }}>
               Appointments {showAppointments ? '▲' : '▼'}
             </h2>
             {showAppointments && <PatientAppointments profile={profile} />}
           </div>
         )}
 
+        {/* Transactions Section */}
         {canSeeAllDepartments && (
           <div className="section">
-            <h2 className="sectionTitle" onClick={() => setShowTransactions(prev => !prev)}>
+            <h2 onClick={() => setShowTransactions(prev => !prev)} style={{ cursor: 'pointer' }}>
               Transactions {showTransactions ? '▲' : '▼'}
             </h2>
             {showTransactions && <Transactions profile={profile} />}
