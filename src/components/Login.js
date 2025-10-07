@@ -21,11 +21,11 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="loginContainer">
-      <div className="loginBox">
+    <div className="login-container">
+      <div className="login-box">
         <h2>Milk Dashboard</h2>
         <form onSubmit={handleLogin}>
-          <div className="formGroup">
+          <div className="form-group">
             <label>Email</label>
             <input
               type="email"
@@ -33,11 +33,11 @@ export default function Login({ onLogin }) {
               onChange={e => setEmail(e.target.value)}
               required
               disabled={loading}
-              className="formInput"
+              className="form-input"
             />
           </div>
 
-          <div className="formGroup">
+          <div className="form-group">
             <label>Password</label>
             <input
               type="password"
@@ -45,26 +45,22 @@ export default function Login({ onLogin }) {
               onChange={e => setPassword(e.target.value)}
               required
               disabled={loading}
-              className="formInput"
+              className="form-input"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            style={{
-              ...styles.loginButton,
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
-            onMouseOver={e => !loading && (e.currentTarget.style.backgroundColor = styles.loginButtonHover.backgroundColor)}
-            onMouseOut={e => !loading && (e.currentTarget.style.backgroundColor = styles.loginButton.backgroundColor)}
+            className="login-button"
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
-        {error && <p className="errorMessage">{error}</p>}
+        {error && <p className="error-message">{error}</p>}
       </div>
     </div>
   );
 }
+s
