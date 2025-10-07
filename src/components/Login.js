@@ -21,11 +21,11 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div style={styles.loginContainer}>
-      <div style={styles.loginBox}>
+    <div className="loginContainer">
+      <div className="loginBox">
         <h2>Milk Dashboard</h2>
         <form onSubmit={handleLogin}>
-          <div style={styles.formGroup}>
+          <div className="formGroup">
             <label>Email</label>
             <input
               type="email"
@@ -33,11 +33,11 @@ export default function Login({ onLogin }) {
               onChange={e => setEmail(e.target.value)}
               required
               disabled={loading}
-              style={styles.formInput}
+              className="formInput"
             />
           </div>
 
-          <div style={styles.formGroup}>
+          <div className="formGroup">
             <label>Password</label>
             <input
               type="password"
@@ -45,7 +45,7 @@ export default function Login({ onLogin }) {
               onChange={e => setPassword(e.target.value)}
               required
               disabled={loading}
-              style={styles.formInput}
+              className="formInput"
             />
           </div>
 
@@ -63,7 +63,7 @@ export default function Login({ onLogin }) {
           </button>
         </form>
 
-        {error && <p style={styles.errorMessage}>{error}</p>}
+        {error && <p className="errorMessage">{error}</p>}
       </div>
     </div>
   );
