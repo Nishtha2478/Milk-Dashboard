@@ -1,171 +1,132 @@
 import React, { useState, useEffect } from 'react';
-import { Paper, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 import { supabase } from '../supabaseClient';
-import ChartHelper from './ChartHelper';
-import '../index.css';
+import { Paper, Table, TableHead, TableBody, TableRow, TableCell, CircularProgress, Typography, Button } from '@mui/material';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { calculateForecastData } from './ChartHelper';
 
-export default function FinanceSummary({ profile }) {
-  const [view, setView] = useState('monthly'); 
-  const [monthlyData, setMonthlyData] = useState([]);
+export default function FinanceSummary() {
   const [dailyData, setDailyData] = useState([]);
-  const [forecastMonths, setForecastMonths] = useState(6);
-  const [chartData, setChartData] = useState([]);
-  const [lastFetchTime, setLastFetchTime] = useState(Date.now());
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showType, setShowType] = useState('daily');
+  const [forecastData, setForecastData] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data, error } = await supabase
-        .from('finance_summary')
-        .select('*')
-        .order('year', { ascending: true })
-        .order('month', { ascending: true });
+  // Fetch finance data from Supabase
+  const fetchFinanceData = async () => {
+    setLoading(true);
+    try {
+      // Fetch patient data for financial analysis
+      const { data, error } = await supabase.from('patient').select('*');
 
-      if (!error && data) {
-        setMonthlyData(data);
+      if (error) throw error;
+      if (data) {
+        // Convert timestamps
+        const formattedData = data.map((item) => ({
+          ...item,
+          date: new Date(item.created_at).toLocaleDateString(),
+        }));
 
-        const dailyRows = [];
-        data.forEach(row => {
-          const daysInMonth = new Date(row.year, row.month, 0).getDate();
-          const dailyIncome = row.total_income / daysInMonth;
-          const dailyExpenses = row.total_expenses / daysInMonth;
-          const dailyProfit = row.profit / daysInMonth;
-
-          for (let d = 1; d <= daysInMonth; d++) {
-            dailyRows.push({
-              year: row.year,
-              month: row.month,
-              day: d,
-              total_income: parseFloat(dailyIncome.toFixed(2)),
-              total_expenses: parseFloat(dailyExpenses.toFixed(2)),
-              profit: parseFloat(dailyProfit.toFixed(2)),
-            });
-          }
+        // Group daily
+        const dailyMap = {};
+        formattedData.forEach((row) => {
+          if (!dailyMap[row.date]) dailyMap[row.date] = { date: row.date, total: 0 };
+          dailyMap[row.date].total += row.amount || 0;
         });
 
-        setDailyData(dailyRows);
-        setLastFetchTime(Date.now());
-      }
-    };
+        // Group monthly
+        const monthlyMap = {};
+        formattedData.forEach((row) => {
+          const month = new Date(row.created_at).toLocaleString('default', { month: 'short', year: 'numeric' });
+          if (!monthlyMap[month]) monthlyMap[month] = { month, total: 0 };
+          monthlyMap[month].total += row.amount || 0;
+        });
 
-    fetchData();
-  }, []);
+        setDailyData(Object.values(dailyMap));
+        setMonthlyData(Object.values(monthlyMap));
+        setForecastData(calculateForecastData(Object.values(monthlyMap)));
+      }
+    } catch (error) {
+      console.error('Error fetching finance data:', error.message);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const sourceData = view === 'monthly' ? monthlyData : dailyData;
-    if (!sourceData.length) return;
+    fetchFinanceData();
+  }, []);
 
-    const labels = sourceData.map(d =>
-      view === 'monthly' ? `${d.month}/${d.year}` : `${d.month}/${d.day}/${d.year}`
+  if (loading) {
+    return (
+      <Paper className="finance-paper">
+        <Typography variant="h6">Loading finance data...</Typography>
+        <CircularProgress />
+      </Paper>
     );
-    const values = sourceData.map(d => d.profit);
+  }
 
-    const last3 = values.slice(-3);
-    const growth = last3.length >= 2 ? (last3[last3.length - 1] - last3[0]) / (last3.length - 1) : 0;
-
-    const forecastLabels = [];
-    const forecastValues = [];
-    let lastValue = values[values.length - 1];
-
-    for (let i = 1; i <= forecastMonths; i++) {
-      const lastDate = new Date(
-        sourceData[sourceData.length - 1].year,
-        sourceData[sourceData.length - 1].month - 1,
-        sourceData[sourceData.length - 1].day || 1
-      );
-      lastDate.setMonth(lastDate.getMonth() + i);
-      forecastLabels.push(`${lastDate.getMonth() + 1}/${lastDate.getFullYear()}`);
-      lastValue += growth;
-      forecastValues.push(parseFloat(lastValue.toFixed(2)));
-    }
-
-    setChartData([
-      { x: labels, y: values, name: 'Actual Profit' },
-      { x: forecastLabels, y: forecastValues, name: 'Predicted Profit' },
-    ]);
-  }, [view, monthlyData, dailyData, forecastMonths]);
-
-  const chartTitle = profile.role === 'Department Head'
-    ? `Finance Predictions - ${profile.department} Department`
-    : 'Finance Predictions - All Departments';
-
-  const tableData = view === 'monthly' ? monthlyData : dailyData;
-  const columns = view === 'monthly'
-    ? ['Year', 'Month', 'Total Income', 'Total Expenses', 'Profit']
-    : ['Year', 'Month', 'Day', 'Total Income', 'Total Expenses', 'Profit'];
+  const currentData = showType === 'daily' ? dailyData : monthlyData;
 
   return (
-    <Paper className="finance-paper">
-      <div className="finance-buttons">
-        <button
-          onClick={() => setView('daily')}
-          disabled={view === 'daily'}
-          className="finance-toggle-button"
-        >
-          Daily
-        </button>
-        <button
-          onClick={() => setView('monthly')}
-          disabled={view === 'monthly'}
-          className="finance-toggle-button"
-        >
-          Monthly
-        </button>
-      </div>
+    <div className="finance-summary-wrapper">
+      <Paper className="finance-paper">
+        <div className="finance-buttons">
+          <Button
+            variant={showType === 'daily' ? 'contained' : 'outlined'}
+            className="finance-toggle-button"
+            onClick={() => setShowType('daily')}
+          >
+            Daily
+          </Button>
+          <Button
+            variant={showType === 'monthly' ? 'contained' : 'outlined'}
+            className="finance-toggle-button"
+            onClick={() => setShowType('monthly')}
+          >
+            Monthly
+          </Button>
+        </div>
 
-      <h3 className="finance-title">{view.charAt(0).toUpperCase() + view.slice(1)} Finance Summary</h3>
+        <Typography variant="h6" className="finance-title">
+          {showType === 'daily' ? 'Daily Finance Summary' : 'Monthly Finance Summary'}
+        </Typography>
 
-      <div className="finance-table-container">
-        <Table>
-          <TableHead>
-            <TableRow>{columns.map(col => <TableCell key={col}>{col}</TableCell>)}</TableRow>
-          </TableHead>
-          <TableBody>
-            {tableData.map((row, idx) => {
-              const isNew = new Date().getTime() - lastFetchTime < 1000 * 60;
-              return (
-                <TableRow key={idx} className={isNew ? "highlight-new" : ""}>
-                  {view === 'monthly' ? (
-                    <>
-                      <TableCell>{row.year}</TableCell>
-                      <TableCell>{row.month}</TableCell>
-                      <TableCell>{row.total_income}</TableCell>
-                      <TableCell>{row.total_expenses}</TableCell>
-                      <TableCell>{row.profit}</TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell>{row.year}</TableCell>
-                      <TableCell>{row.month}</TableCell>
-                      <TableCell>{row.day}</TableCell>
-                      <TableCell>{row.total_income}</TableCell>
-                      <TableCell>{row.total_expenses}</TableCell>
-                      <TableCell>{row.profit}</TableCell>
-                    </>
-                  )}
+        <div className="finance-table-container">
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell><strong>{showType === 'daily' ? 'Date' : 'Month'}</strong></TableCell>
+                <TableCell align="right"><strong>Total Amount ($)</strong></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {currentData.map((row, index) => (
+                <TableRow key={index} className={index === currentData.length - 1 ? 'highlight-new' : ''}>
+                  <TableCell>{showType === 'daily' ? row.date : row.month}</TableCell>
+                  <TableCell align="right">{row.total.toFixed(2)}</TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
-      <div className="forecast-input">
-        <label>
-          Months to forecast:{' '}
-          <input
-            type="number"
-            min="1"
-            max="24"
-            value={forecastMonths}
-            onChange={e => setForecastMonths(parseInt(e.target.value))}
-          />
-        </label>
-      </div>
+        <Typography variant="h6" style={{ marginTop: '20px' }}>
+          Forecasted Profit Trend
+        </Typography>
 
-      <div className="finance-chart">
-        <h3>{chartTitle}</h3>
-        <ChartHelper dataArray={chartData} title={chartTitle} yAxisTitle="Profit" />
-      </div>
-    </Paper>
+        <div className="finance-chart">
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={forecastData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="actual" stroke="#8884d8" name="Actual" />
+              <Line type="monotone" dataKey="forecast" stroke="#82ca9d" name="Forecast" strokeDasharray="5 5" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </Paper>
+    </div>
   );
 }
