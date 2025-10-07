@@ -7,9 +7,9 @@ import PatientAppointments from './components/PatientAppointments';
 import FinanceSummary from './components/FinanceSummary';
 import Supplies from './components/Supplies';
 import Transactions from './components/Transactions';
-import SignUp from './components/SignUp'; 
+import SignUp from './components/SignUp';
 import './index.css';
-import '.app.css';
+
 function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -66,16 +66,15 @@ function App() {
   if (!user) return <Login onLogin={setUser} />;
   if (!profile) return <p>No profile found for this user</p>;
 
-  const canSeeSignUp = profile.role === 'Owner' || profile.role === 'Supervisor'; // <--- DEFINE
+  const canSeeSignUp = profile.role === 'Owner' || profile.role === 'Supervisor';
+  const canSeeAllDepartments = profile.role === 'Owner' || profile.role === 'Supervisor';
 
   return (
     <div className="app-container">
-      <header className="appHeader">
-        <h1 className="appHeaderTitle">Milk Dashboard</h1>
+      <header className="app-header">
+        <h1>Milk Dashboard</h1>
         <button
-          sclassName="logoutButton"
-          onMouseOver={e => (e.currentTarget.style.backgroundColor = styles.logoutButtonHover.backgroundColor)}
-          onMouseOut={e => (e.currentTarget.style.backgroundColor = styles.logoutButton.backgroundColor)}
+          className="logout-button"
           onClick={async () => {
             await supabase.auth.signOut();
             setUser(null);
@@ -89,17 +88,10 @@ function App() {
         {/* Patients Section */}
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
           <div className="section">
-            <h2
-              onClick={() => setShowPatients(prev => !prev)}
-              style={{ cursor: 'pointer' }}
-            >
+            <h2 onClick={() => setShowPatients(prev => !prev)} style={{ cursor: 'pointer' }}>
               Patients {showPatients ? '▲' : '▼'}
             </h2>
-            {showPatients && (
-              <>
-                <Patients profile={profile} />
-              </>
-            )}
+            {showPatients && <Patients profile={profile} />}
           </div>
         )}
 
@@ -153,9 +145,10 @@ function App() {
           </div>
         )}
 
+        {/* Sign Up Section */}
         {canSeeSignUp && (
           <div className="section">
-            <h2 className="sectionTitle" onClick={() => setShowSignUp(prev => !prev)}>
+            <h2 onClick={() => setShowSignUp(prev => !prev)} style={{ cursor: 'pointer' }}>
               Sign Up {showSignUp ? '▲' : '▼'}
             </h2>
             {showSignUp && <SignUp profile={profile} />}
