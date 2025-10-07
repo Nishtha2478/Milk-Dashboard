@@ -1,4 +1,5 @@
 const styles = {
+  // Global body styles
   body: {
     margin: 0,
     fontFamily: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -7,6 +8,7 @@ const styles = {
     backgroundColor: '#f0f0f0',
   },
 
+  // App styles
   appContainer: {
     padding: '1rem',
   },
@@ -76,6 +78,13 @@ const styles = {
     marginBottom: '1rem',
   },
 
+  formInput: {
+    padding: '0.5rem',
+    borderRadius: '0.25rem',
+    border: '1px solid #ccc',
+    marginTop: '0.25rem',
+  },
+
   loginButton: {
     padding: '0.75rem',
     backgroundColor: '#1e90ff',
@@ -87,6 +96,11 @@ const styles = {
 
   loginButtonHover: {
     backgroundColor: '#0d6efd',
+  },
+
+  errorMessage: {
+    color: 'red',
+    marginTop: '1rem',
   },
 };
 

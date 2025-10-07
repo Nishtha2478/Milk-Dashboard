@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import styles from '../styles'; // import the JS styles object
+import styles from '../styles';
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -14,14 +14,10 @@ export default function Login({ onLogin }) {
     setLoading(true);
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
     setLoading(false);
 
-    if (error) {
-      setError(error.message);
-    } else {
-      onLogin(data.user);
-    }
+    if (error) setError(error.message);
+    else onLogin(data.user);
   };
 
   return (
@@ -30,30 +26,26 @@ export default function Login({ onLogin }) {
         <h2>Milk Dashboard</h2>
         <form onSubmit={handleLogin}>
           <div style={styles.formGroup}>
-            <label htmlFor="email">Email</label>
+            <label>Email</label>
             <input
-              id="email"
               type="email"
-              placeholder="Enter your email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               disabled={loading}
-              style={{ padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid #ccc', marginTop: '0.25rem' }}
+              style={styles.formInput}
             />
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="password">Password</label>
+            <label>Password</label>
             <input
-              id="password"
               type="password"
-              placeholder="Enter your password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               disabled={loading}
-              style={{ padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid #ccc', marginTop: '0.25rem' }}
+              style={styles.formInput}
             />
           </div>
 
@@ -64,14 +56,14 @@ export default function Login({ onLogin }) {
               ...styles.loginButton,
               cursor: loading ? 'not-allowed' : 'pointer',
             }}
-            onMouseOver={(e) => !loading && (e.currentTarget.style.backgroundColor = styles.loginButtonHover.backgroundColor)}
-            onMouseOut={(e) => !loading && (e.currentTarget.style.backgroundColor = styles.loginButton.backgroundColor)}
+            onMouseOver={e => !loading && (e.currentTarget.style.backgroundColor = styles.loginButtonHover.backgroundColor)}
+            onMouseOut={e => !loading && (e.currentTarget.style.backgroundColor = styles.loginButton.backgroundColor)}
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
-        {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
+        {error && <p style={styles.errorMessage}>{error}</p>}
       </div>
     </div>
   );
