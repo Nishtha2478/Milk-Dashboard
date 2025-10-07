@@ -22,7 +22,6 @@ export default function ChartHelper({ dataArray, title, yAxisTitle = 'Value' }) 
   );
 }
 
-// Named export
 export function calculateForecastData(sourceData, monthsToForecast) {
   if (!sourceData.length) return [];
 
