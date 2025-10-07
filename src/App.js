@@ -23,12 +23,22 @@ function App() {
   const [showTransactions, setShowTransactions] = useState(true);
   const [showSignUp, setShowSignUp] = useState(true);
 
+  // Apply body styles globally
+  useEffect(() => {
+    Object.assign(document.body.style, styles.body);
+      supabase.auth.getSession().then(({ data: { session } }) => {
+    console.log('session', session);
+    setUser(session?.user ?? null);
+  });
+  }, []);
+  
+  // Auth listener
   useEffect(() => {
     let isMounted = true;
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (isMounted) setUser(session?.user ?? null);
     });
-    Object.assign(document.body.style, styles.body);
+
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (isMounted) setUser(session?.user ?? null);
     });
@@ -39,6 +49,7 @@ function App() {
     };
   }, []);
 
+  // Fetch profile
   useEffect(() => {
     if (!user) {
       setProfile(null);
@@ -87,10 +98,7 @@ function App() {
       <main style={styles.appMain}>
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
           <div style={styles.section}>
-            <h2
-              onClick={() => setShowPatients(prev => !prev)}
-              style={styles.sectionTitle}
-            >
+            <h2 style={styles.sectionTitle} onClick={() => setShowPatients(prev => !prev)}>
               Patients {showPatients ? '▲' : '▼'}
             </h2>
             {showPatients && <Patients profile={profile} />}
@@ -99,10 +107,7 @@ function App() {
 
         {canSeeAllDepartments && (
           <div style={styles.section}>
-            <h2
-              onClick={() => setShowStaff(prev => !prev)}
-              style={styles.sectionTitle}
-            >
+            <h2 style={styles.sectionTitle} onClick={() => setShowStaff(prev => !prev)}>
               Staff {showStaff ? '▲' : '▼'}
             </h2>
             {showStaff && <Staff profile={profile} />}
@@ -111,10 +116,7 @@ function App() {
 
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
           <div style={styles.section}>
-            <h2
-              onClick={() => setShowFinance(prev => !prev)}
-              style={styles.sectionTitle}
-            >
+            <h2 style={styles.sectionTitle} onClick={() => setShowFinance(prev => !prev)}>
               Finance Summary {showFinance ? '▲' : '▼'}
             </h2>
             {showFinance && <FinanceSummary profile={profile} />}
@@ -123,10 +125,7 @@ function App() {
 
         {canSeeAllDepartments && (
           <div style={styles.section}>
-            <h2
-              onClick={() => setShowSupplies(prev => !prev)}
-              style={styles.sectionTitle}
-            >
+            <h2 style={styles.sectionTitle} onClick={() => setShowSupplies(prev => !prev)}>
               Supplies {showSupplies ? '▲' : '▼'}
             </h2>
             {showSupplies && <Supplies profile={profile} />}
@@ -135,10 +134,7 @@ function App() {
 
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
           <div style={styles.section}>
-            <h2
-              onClick={() => setShowAppointments(prev => !prev)}
-              style={styles.sectionTitle}
-            >
+            <h2 style={styles.sectionTitle} onClick={() => setShowAppointments(prev => !prev)}>
               Appointments {showAppointments ? '▲' : '▼'}
             </h2>
             {showAppointments && <PatientAppointments profile={profile} />}
@@ -147,10 +143,7 @@ function App() {
 
         {canSeeAllDepartments && (
           <div style={styles.section}>
-            <h2
-              onClick={() => setShowTransactions(prev => !prev)}
-              style={styles.sectionTitle}
-            >
+            <h2 style={styles.sectionTitle} onClick={() => setShowTransactions(prev => !prev)}>
               Transactions {showTransactions ? '▲' : '▼'}
             </h2>
             {showTransactions && <Transactions profile={profile} />}
@@ -159,10 +152,7 @@ function App() {
 
         {canSeeSignUp && (
           <div style={styles.section}>
-            <h2
-              onClick={() => setShowSignUp(prev => !prev)}
-              style={styles.sectionTitle}
-            >
+            <h2 style={styles.sectionTitle} onClick={() => setShowSignUp(prev => !prev)}>
               Sign Up {showSignUp ? '▲' : '▼'}
             </h2>
             {showSignUp && <SignUp profile={profile} />}
