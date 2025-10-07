@@ -55,7 +55,6 @@ const styles = {
     cursor: 'pointer',
   },
 
-  // Login page
   loginContainer: {
     display: 'flex',
     justifyContent: 'center',

@@ -9,7 +9,7 @@ import Supplies from './components/Supplies';
 import Transactions from './components/Transactions';
 import SignUp from './components/SignUp'; 
 import './index.css';
-import '.App.css';
+import '.app.css';
 function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
