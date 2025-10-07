@@ -8,14 +8,13 @@ import FinanceSummary from './components/FinanceSummary';
 import Supplies from './components/Supplies';
 import Transactions from './components/Transactions';
 import SignUp from './components/SignUp';
-import './index.css';
+import styles from './styles';
 
 function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Section toggles
   const [showPatients, setShowPatients] = useState(true);
   const [showStaff, setShowStaff] = useState(true);
   const [showFinance, setShowFinance] = useState(true);
@@ -24,13 +23,12 @@ function App() {
   const [showTransactions, setShowTransactions] = useState(true);
   const [showSignUp, setShowSignUp] = useState(true);
 
-  // Auth listener
   useEffect(() => {
     let isMounted = true;
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (isMounted) setUser(session?.user ?? null);
     });
-
+    Object.assign(document.body.style, styles.body);
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (isMounted) setUser(session?.user ?? null);
     });
@@ -41,7 +39,6 @@ function App() {
     };
   }, []);
 
-  // Fetch profile
   useEffect(() => {
     if (!user) {
       setProfile(null);
@@ -71,11 +68,13 @@ function App() {
   const canSeeAllDepartments = profile.role === 'Owner' || profile.role === 'Supervisor';
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <h1>Milk Dashboard</h1>
+    <div style={styles.appContainer}>
+      <header style={styles.appHeader}>
+        <h1 style={styles.appHeaderTitle}>Milk Dashboard</h1>
         <button
-          className="logout-button"
+          style={styles.logoutButton}
+          onMouseOver={e => (e.currentTarget.style.backgroundColor = styles.logoutButtonHover.backgroundColor)}
+          onMouseOut={e => (e.currentTarget.style.backgroundColor = styles.logoutButton.backgroundColor)}
           onClick={async () => {
             await supabase.auth.signOut();
             setUser(null);
@@ -85,78 +84,85 @@ function App() {
         </button>
       </header>
 
-      <main className="app-main">
-        {/* Patients Section */}
+      <main style={styles.appMain}>
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
-          <div className="section">
+          <div style={styles.section}>
             <h2
               onClick={() => setShowPatients(prev => !prev)}
-              style={{ cursor: 'pointer' }}
+              style={styles.sectionTitle}
             >
               Patients {showPatients ? '▲' : '▼'}
             </h2>
-            {showPatients && (
-              <>
-                <Patients profile={profile} />
-              </>
-            )}
+            {showPatients && <Patients profile={profile} />}
           </div>
         )}
 
-        {/* Staff Section */}
         {canSeeAllDepartments && (
-          <div className="section">
-            <h2 onClick={() => setShowStaff(prev => !prev)} style={{ cursor: 'pointer' }}>
+          <div style={styles.section}>
+            <h2
+              onClick={() => setShowStaff(prev => !prev)}
+              style={styles.sectionTitle}
+            >
               Staff {showStaff ? '▲' : '▼'}
             </h2>
             {showStaff && <Staff profile={profile} />}
           </div>
         )}
 
-        {/* Finance Section */}
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
-          <div className="section">
-            <h2 onClick={() => setShowFinance(prev => !prev)} style={{ cursor: 'pointer' }}>
+          <div style={styles.section}>
+            <h2
+              onClick={() => setShowFinance(prev => !prev)}
+              style={styles.sectionTitle}
+            >
               Finance Summary {showFinance ? '▲' : '▼'}
             </h2>
             {showFinance && <FinanceSummary profile={profile} />}
           </div>
         )}
 
-        {/* Supplies Section */}
         {canSeeAllDepartments && (
-          <div className="section">
-            <h2 onClick={() => setShowSupplies(prev => !prev)} style={{ cursor: 'pointer' }}>
+          <div style={styles.section}>
+            <h2
+              onClick={() => setShowSupplies(prev => !prev)}
+              style={styles.sectionTitle}
+            >
               Supplies {showSupplies ? '▲' : '▼'}
             </h2>
             {showSupplies && <Supplies profile={profile} />}
           </div>
         )}
 
-        {/* Appointments Section */}
         {(canSeeAllDepartments || profile.role === 'Department Head') && (
-          <div className="section">
-            <h2 onClick={() => setShowAppointments(prev => !prev)} style={{ cursor: 'pointer' }}>
+          <div style={styles.section}>
+            <h2
+              onClick={() => setShowAppointments(prev => !prev)}
+              style={styles.sectionTitle}
+            >
               Appointments {showAppointments ? '▲' : '▼'}
             </h2>
             {showAppointments && <PatientAppointments profile={profile} />}
           </div>
         )}
 
-        {/* Transactions Section */}
         {canSeeAllDepartments && (
-          <div className="section">
-            <h2 onClick={() => setShowTransactions(prev => !prev)} style={{ cursor: 'pointer' }}>
+          <div style={styles.section}>
+            <h2
+              onClick={() => setShowTransactions(prev => !prev)}
+              style={styles.sectionTitle}
+            >
               Transactions {showTransactions ? '▲' : '▼'}
             </h2>
             {showTransactions && <Transactions profile={profile} />}
           </div>
         )}
 
-        {/* Sign Up Section - Only for Owner/Supervisor */}
         {canSeeSignUp && (
-          <div className="section">
-            <h2 onClick={() => setShowSignUp(prev => !prev)} style={{ cursor: 'pointer' }}>
+          <div style={styles.section}>
+            <h2
+              onClick={() => setShowSignUp(prev => !prev)}
+              style={styles.sectionTitle}
+            >
               Sign Up {showSignUp ? '▲' : '▼'}
             </h2>
             {showSignUp && <SignUp profile={profile} />}
